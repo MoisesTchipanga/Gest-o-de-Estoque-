@@ -1,0 +1,89 @@
+CREATE TABLE tb_usuario (
+    id_usuario SERIAL PRIMARY KEY,
+    nome_usuario VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    senha_hash TEXT NOT NULL,
+    perfil VARCHAR(20) NOT NULL CHECK (perfil IN ('admin', 'gerente', 'funcionario')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE tb_categoria (
+    id_categoria SERIAL PRIMARY KEY,
+    nome_categoria VARCHAR(100) NOT NULL,
+    descricao TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE tb_fornecedor (
+    id_fornecedor SERIAL PRIMARY KEY,
+    nome_fornecedor VARCHAR(150) NOT NULL,
+    contacto VARCHAR(50),
+    email VARCHAR(150),
+    endereco TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE tb_produto (
+    id_produto SERIAL PRIMARY KEY,
+    nome_produto VARCHAR(150) NOT NULL,
+    sku VARCHAR(50) UNIQUE NOT NULL,
+    descricao TEXT,
+
+    preco_compra NUMERIC(10,2) CHECK (preco_compra >= 0),
+    preco_venda NUMERIC(10,2) CHECK (preco_venda >= 0),
+
+    id_categoria INT,
+    id_fornecedor INT,
+
+    estoque_atual INT NOT NULL DEFAULT 0 CHECK (estoque_atual >= 0),
+    estoque_minimo INT NOT NULL DEFAULT 0 CHECK (estoque_minimo >= 0),
+
+    ativo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_categoria
+        FOREIGN KEY (id_categoria) REFERENCES tb_categoria(id_categoria),
+
+    CONSTRAINT fk_fornecedor
+        FOREIGN KEY (id_fornecedor) REFERENCES tb_fornecedor(id_fornecedor)
+);
+
+
+CREATE TABLE tb_movimentacao (
+    id_movimentacao SERIAL PRIMARY KEY,
+
+    id_produto INT NOT NULL,
+    id_usuario INT NOT NULL,
+
+    tipo VARCHAR(10) NOT NULL CHECK (tipo IN ('entrada', 'saida', 'ajuste')),
+    quantidade INT NOT NULL CHECK (quantidade > 0),
+
+    motivo TEXT,
+    data_movimentacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_produto
+        FOREIGN KEY (id_produto) REFERENCES tb_produto(id_produto),
+
+    CONSTRAINT fk_usuario
+        FOREIGN KEY (id_usuario) REFERENCES tb_usuario(id_usuario)
+);
+
+CREATE TABLE tb_alerta (
+    id_alerta SERIAL PRIMARY KEY,
+
+    id_produto INT NOT NULL,
+    id_usuario_resolucao INT,
+
+    mensagem TEXT NOT NULL,
+
+    status VARCHAR(20) DEFAULT 'pendente'
+        CHECK (status IN ('pendente', 'resolvido')),
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_produto_alerta
+        FOREIGN KEY (id_produto) REFERENCES tb_produto(id_produto),
+
+    CONSTRAINT fk_usuario_alerta
+        FOREIGN KEY (id_usuario_resolucao) REFERENCES tb_usuario(id_usuario)
+);
